@@ -3,26 +3,63 @@
   "units": "metric",
   "refreshMinutes": 15,
   "rotate": 0,
-  "location": { "name": "Toronto", "lat": 43.6532, "lon": -79.3832 },
+  "location": {
+    "name": "Toronto",
+    "lat": 43.6532,
+    "lon": -79.3832
+  },
   "widgets": [
-    { "type": "weather", "enabled": true },
-    { "type": "commute", "enabled": true },
-    { "type": "calendar", "enabled": true },
-    { "type": "news", "enabled": true }
+    {
+      "type": "weather",
+      "enabled": true
+    },
+    {
+      "type": "commute",
+      "enabled": true
+    },
+    {
+      "type": "calendar",
+      "enabled": true
+    },
+    {
+      "type": "news",
+      "enabled": true
+    }
   ],
   "commute": {
     "country": "CA",
     "routes": [
-      { "label": "To work", "from": "$HOME_ADDRESS", "to": "$WORK_ADDRESS", "mode": "car", "enabled": true }
+      {
+        "label": "To work",
+        "from": "$HOME_ADDRESS",
+        "to": "$WORK_ADDRESS",
+        "mode": "car",
+        "enabled": true
+      }
     ]
   },
-  "calendar": { "days": 2, "maxEvents": 8 },
+  "calendar": {
+    "days": 2,
+    "maxEvents": 8
+  },
   "news": {
     "maxItems": 6,
     "feeds": [
-      { "name": "CBC", "url": "https://www.cbc.ca/webfeed/rss/rss-topstories", "enabled": true },
-      { "name": "CBC Toronto", "url": "https://www.cbc.ca/webfeed/rss/rss-canada-toronto", "enabled": true },
-      { "name": "BBC World", "url": "https://feeds.bbci.co.uk/news/world/rss.xml", "enabled": false }
+      {
+        "name": "CBC",
+        "url": "https://www.cbc.ca/webfeed/rss/rss-topstories",
+        "enabled": true
+      },
+      {
+        "name": "CBC Toronto",
+        "url": "https://www.cbc.ca/webfeed/rss/rss-canada-toronto",
+        "enabled": true
+      },
+      {
+        "name": "BBC World",
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "enabled": false
+      }
     ]
   }
 }
