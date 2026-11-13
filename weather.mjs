@@ -10,9 +10,23 @@ export async function getWeather(loc, units, tz) {
     temperature_unit: imperial ? 'fahrenheit' : 'celsius',
     wind_speed_unit: imperial ? 'mph' : 'kmh',
   });
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`, { signal: AbortSignal.timeout(20000) });
-  if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
-  return shapeWeather(await res.json(), imperial);
+  // Retry a few times: the free API occasionally drops connections from shared cloud machines.
+  let lastErr;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`, {
+        signal: AbortSignal.timeout(20000),
+        headers: { 'User-Agent': 'kobo-dash (github.com)' },
+      });
+      if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+      return shapeWeather(await res.json(), imperial);
+    } catch (e) {
+      lastErr = e;
+      console.error(`[weather] attempt ${attempt} failed: ${e.message}${e.cause ? ` (${e.cause.code || e.cause.message})` : ''}`);
+      await new Promise((r) => setTimeout(r, attempt * 3000));
+    }
+  }
+  throw lastErr;
 }
 
 /** Turn the raw Open-Meteo response into what the template needs. */

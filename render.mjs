@@ -8,6 +8,7 @@
 
 import { readFile, writeFile, mkdir, cp, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import dns from 'node:dns';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getWeather } from './weather.mjs';
@@ -15,6 +16,9 @@ import { getCommutes } from './commute.mjs';
 import { getCalendar } from './calendar.mjs';
 import { getNews } from './news.mjs';
 import { renderHtml } from './template.mjs';
+
+// GitHub's machines have no IPv6; prefer IPv4 so connections don't fail.
+dns.setDefaultResultOrder('ipv4first');
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(ROOT, 'site');
@@ -28,8 +32,9 @@ async function loadPlaywright() {
 
 async function safe(name, fn) {
   try { return await fn(); } catch (e) {
-    console.error(`[${name}] ${e.message}`);
-    return { error: e.message.slice(0, 80) };
+    const why = e.cause ? ` (${e.cause.code || e.cause.message})` : '';
+    console.error(`[${name}] ${e.message}${why}`);
+    return { error: `${e.message}${why}`.slice(0, 80) };
   }
 }
 
