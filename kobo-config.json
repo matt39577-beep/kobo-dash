@@ -1,0 +1,11 @@
+{
+    "TrmnlId": "kobo-mini",
+    "TrmnlToken": "not-needed",
+    "TrmnlApiUrl": "https://YOUR-GITHUB-USERNAME.github.io/kobo-dash",
+    "DebugToScreen": 0,
+    "LoopMaxIteration": 0,
+    "ConnectedGracePeriod": 0,
+    "ImageFormat": "png",
+    "IgnoreCurlErrors": "true",
+    "WpaNetworkId": "-1"
+}

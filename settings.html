@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kobo Dash">
+<meta name="theme-color" content="#f4f1ea">
+<title>Kobo Dash Settings</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fffdf8;--ink:#1d1b17;--muted:#6b665c;--line:#e2ddd1;--accent:#1d1b17;--ok:#2f6b3a;--err:#a3321f;--r:14px}
+@media (prefers-color-scheme:dark){:root{--bg:#161512;--card:#201f1b;--ink:#f1ede4;--muted:#a39d90;--line:#34322c;--accent:#f1ede4;--ok:#7fc28a;--err:#f08a74}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:560px;margin:0 auto;padding:20px 16px 120px}
+h1{font-size:28px;margin:8px 0 4px;letter-spacing:-.5px}
+.lead{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 12px;color:var(--muted)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+input,select{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 14px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+button.small{padding:6px 10px;font-size:14px}
+button:disabled{opacity:.5}
+.preview{width:100%;max-width:300px;display:block;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:#fff;aspect-ratio:3/4;object-fit:contain}
+.widget{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.widget:first-of-type{border-top:none}
+.widget .name{flex:1;font-weight:600;text-transform:capitalize}
+.switch{position:relative;width:46px;height:28px;flex:0 0 46px}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.15s}
+.switch span::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--card);transition:.15s;box-shadow:0 1px 2px #0003}
+.switch input:checked+span{background:var(--ok)}
+.switch input:checked+span::after{transform:translateX(18px)}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px}
+.item .row{margin-top:6px}
+.results button{display:block;width:100%;text-align:left;margin-top:6px;font-weight:400}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.bar .inner{max-width:560px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .status{flex:1;font-size:14px;color:var(--muted)}
+.status.ok{color:var(--ok)} .status.err{color:var(--err)}
+details summary{cursor:pointer;font-weight:600}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Kobo Dash</h1>
+  <p class="lead">Change what your Kobo shows. Saved changes show up on the screen at its next refresh.</p>
+
+  <div class="card" id="connectCard">
+    <h2>Connect</h2>
+    <label for="token">GitHub access token</label>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <p class="hint">A fine-grained token for this repo only, with <b>Contents</b> and <b>Actions</b> set to read &amp; write. It's stored only on this phone.</p>
+    <details style="margin-top:10px"><summary>Advanced</summary>
+      <div class="row"><div><label for="owner">Owner</label><input id="owner"></div><div><label for="repo">Repo</label><input id="repo"></div></div>
+      <label for="siteKey">Site key (if you set the SITE_KEY secret)</label><input id="siteKey" autocomplete="off">
+    </details>
+    <div class="row" style="margin-top:12px"><button class="primary" id="connectBtn">Connect</button></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="card">
+      <h2>Current screen</h2>
+      <img class="preview" id="preview" alt="Current dashboard image">
+      <p class="hint" id="runInfo" style="text-align:center"></p>
+    </div>
+
+    <div class="card">
+      <h2>Location</h2>
+      <div class="row"><input id="locSearch" placeholder="Search a city…"><button class="small" id="locBtn" style="flex:0">Search</button></div>
+      <div class="results" id="locResults"></div>
+      <p class="hint" id="locCurrent"></p>
+      <div class="row">
+        <div><label for="units">Units</label><select id="units"><option value="metric">°C, km/h</option><option value="imperial">°F, mph</option></select></div>
+        <div><label for="tz">Time zone</label><input id="tz"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Widgets</h2>
+      <div id="widgets"></div>
+      <p class="hint">Use the arrows to reorder. Calendar and news stretch to fill the space that's left.</p>
+    </div>
+
+    <div class="card">
+      <h2>Commute</h2>
+      <div id="routes"></div>
+      <button class="small" id="addRoute" style="margin-top:10px">+ Add route</button>
+      <p class="hint">Typing <code>$HOME_ADDRESS</code> or <code>$WORK_ADDRESS</code> uses the private addresses saved as GitHub secrets. Anything else you type here is public in your repo, so use an intersection or landmark.</p>
+    </div>
+
+    <div class="card">
+      <h2>Calendar</h2>
+      <div class="row">
+        <div><label for="calDays">Days ahead</label><select id="calDays"><option>1</option><option>2</option><option>3</option><option>5</option><option>7</option></select></div>
+        <div><label for="calMax">Max events</label><input id="calMax" type="number" min="1" max="15"></div>
+      </div>
+      <p class="hint">Your calendar's private link is stored as the <code>CALENDAR_ICS_URLS</code> GitHub secret.</p>
+    </div>
+
+    <div class="card">
+      <h2>News</h2>
+      <div id="feeds"></div>
+      <div class="row" style="margin-top:10px">
+        <select id="presetFeed"><option value="">Add a feed…</option></select>
+        <button class="small" id="addFeed" style="flex:0">Custom</button>
+      </div>
+      <label for="newsMax">Max headlines</label><input id="newsMax" type="number" min="1" max="12">
+    </div>
+
+    <div class="card">
+      <h2>Display</h2>
+      <div class="row">
+        <div><label for="refresh">Kobo refresh</label><select id="refresh"><option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Every hour</option></select></div>
+        <div><label for="rotate">Rotation</label><select id="rotate"><option value="0">Portrait</option><option value="180">Portrait, flipped</option><option value="90">Turned 90°</option><option value="270">Turned 270°</option></select></div>
+      </div>
+      <p class="hint">The image itself is rebuilt about every 15 minutes. Longer Kobo refreshes save battery.</p>
+    </div>
+  </div>
+</main>
+
+<div class="bar hidden" id="bar"><div class="inner">
+  <div class="status" id="status">Not saved yet</div>
+  <button id="refreshNow">Refresh now</button>
+  <button class="primary" id="save">Save</button>
+</div></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = { get: (k) => { try { return localStorage.getItem('kd_' + k) || ''; } catch { return ''; } },
+                set: (k, v) => { try { localStorage.setItem('kd_' + k, v); } catch {} } };
+const PRESETS = [
+  ['CBC Top Stories', 'https://www.cbc.ca/webfeed/rss/rss-topstories'],
+  ['CBC Toronto', 'https://www.cbc.ca/webfeed/rss/rss-canada-toronto'],
+  ['CBC Canada', 'https://www.cbc.ca/webfeed/rss/rss-canada'],
+  ['CBC Business', 'https://www.cbc.ca/webfeed/rss/rss-business'],
+  ['CBC Sports', 'https://www.cbc.ca/webfeed/rss/rss-sports'],
+  ['CBC Technology', 'https://www.cbc.ca/webfeed/rss/rss-technology'],
+  ['BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml'],
+  ['BBC Technology', 'https://feeds.bbci.co.uk/news/technology/rss.xml'],
+  ['The Verge', 'https://www.theverge.com/rss/index.xml'],
+  ['Hacker News', 'https://hnrss.org/frontpage'],
+  ['NPR News', 'https://feeds.npr.org/1001/rss.xml'],
+];
+let cfg = null, sha = null, branch = 'main';
+
+// Guess owner/repo from a github.io address
+(() => {
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  $('owner').value = store.get('owner') || (m ? m[1] : '');
+  $('repo').value = store.get('repo') || (m ? (location.pathname.split('/')[1] || `${m[1]}.github.io`) : '');
+  $('token').value = store.get('token');
+  $('siteKey').value = store.get('siteKey');
+})();
+
+const status = (t, cls = '') => { const s = $('status'); s.textContent = t; s.className = 'status ' + cls; };
+async function gh(path, opts = {}) {
+  const res = await fetch(`https://api.github.com/repos/${$('owner').value}/${$('repo').value}${path}`, {
+    ...opts,
+    headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${$('token').value.trim()}`, ...(opts.headers || {}) },
+  });
+  if (!res.ok && res.status !== 204) throw new Error(`GitHub said ${res.status}: ${(await res.text()).slice(0, 120)}`);
+  return res.status === 204 ? null : res.json();
+}
+const b64decode = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, '')), (c) => c.charCodeAt(0)));
+const b64encode = (s) => { const b = new TextEncoder().encode(s); let out = ''; b.forEach((x) => out += String.fromCharCode(x)); return btoa(out); };
+
+function siteBase() {
+  const owner = $('owner').value, repo = $('repo').value;
+  const base = repo.toLowerCase() === `${owner.toLowerCase()}.github.io` ? `https://${owner}.github.io` : `https://${owner}.github.io/${repo}`;
+  const key = $('siteKey').value.trim();
+  return key ? `${base}/${key}` : base;
+}
+function loadPreview() { $('preview').src = `${siteBase()}/dashboard.png?t=${Date.now()}`; }
+
+async function connect() {
+  ['owner', 'repo', 'token', 'siteKey'].forEach((k) => store.set(k, $(k).value.trim()));
+  $('connectBtn').disabled = true;
+  try {
+    branch = (await gh('')).default_branch || 'main';
+    const f = await gh(`/contents/config.json?ref=${branch}`);
+    sha = f.sha; cfg = JSON.parse(b64decode(f.content));
+    $('connectCard').classList.add('hidden');
+    $('app').classList.remove('hidden'); $('bar').classList.remove('hidden');
+    fill(); loadPreview(); lastRun();
+    status('Connected');
+  } catch (e) { alert(e.message); }
+  $('connectBtn').disabled = false;
+}
+
+async function lastRun() {
+  try {
+    const r = (await gh('/actions/runs?per_page=1')).workflow_runs[0];
+    if (r) $('runInfo').textContent = `Last update: ${new Date(r.updated_at).toLocaleString()} · ${r.status === 'completed' ? r.conclusion : r.status}`;
+  } catch {}
+}
+
+function fill() {
+  cfg.commute ||= { country: 'CA', routes: [] }; cfg.news ||= { feeds: [], maxItems: 6 }; cfg.calendar ||= { days: 2, maxEvents: 8 };
+  $('units').value = cfg.units || 'metric'; $('tz').value = cfg.timezone || '';
+  $('locCurrent').textContent = cfg.location ? `Now: ${cfg.location.name} (${(+cfg.location.lat).toFixed(2)}, ${(+cfg.location.lon).toFixed(2)})` : '';
+  $('calDays').value = String(cfg.calendar.days || 2); $('calMax').value = cfg.calendar.maxEvents || 8;
+  $('newsMax').value = cfg.news.maxItems || 6;
+  $('refresh').value = String(cfg.refreshMinutes || 15); $('rotate').value = String(cfg.rotate || 0);
+  drawWidgets(); drawRoutes(); drawFeeds();
+  $('presetFeed').innerHTML = '<option value="">Add a feed…</option>' + PRESETS.map((p, i) => `<option value="${i}">${p[0]}</option>`).join('');
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function drawWidgets() {
+  $('widgets').innerHTML = cfg.widgets.map((w, i) => `<div class="widget">
+    <span class="name">${esc(w.type)}</span>
+    <button class="small" data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
+    <button class="small" data-down="${i}" ${i === cfg.widgets.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
+    <label class="switch"><input type="checkbox" data-on="${i}" ${w.enabled ? 'checked' : ''}><span></span></label>
+  </div>`).join('');
+}
+$('widgets').addEventListener('click', (e) => {
+  const up = e.target.dataset.up, down = e.target.dataset.down;
+  const swap = (a, b) => { [cfg.widgets[a], cfg.widgets[b]] = [cfg.widgets[b], cfg.widgets[a]]; drawWidgets(); dirty(); };
+  if (up) swap(+up, +up - 1); if (down) swap(+down, +down + 1);
+});
+$('widgets').addEventListener('change', (e) => { if (e.target.dataset.on) { cfg.widgets[+e.target.dataset.on].enabled = e.target.checked; dirty(); } });
+
+function drawRoutes() {
+  $('routes').innerHTML = cfg.commute.routes.map((r, i) => `<div class="item">
+    <div class="row"><input data-r="${i}" data-f="label" value="${esc(r.label)}" placeholder="Label (e.g. To work)">
+      <button class="small" data-delr="${i}" style="flex:0">Remove</button></div>
+    <div class="row"><input data-r="${i}" data-f="from" value="${esc(r.from)}" placeholder="From"></div>
+    <div class="row"><input data-r="${i}" data-f="to" value="${esc(r.to)}" placeholder="To"></div>
+  </div>`).join('') || '<p class="hint">No routes yet.</p>';
+}
+$('routes').addEventListener('input', (e) => { const d = e.target.dataset; if (d.r) { cfg.commute.routes[+d.r][d.f] = e.target.value; dirty(); } });
+$('routes').addEventListener('click', (e) => { if (e.target.dataset.delr) { cfg.commute.routes.splice(+e.target.dataset.delr, 1); drawRoutes(); dirty(); } });
+$('addRoute').onclick = () => { cfg.commute.routes.push({ label: 'To work', from: '$HOME_ADDRESS', to: '$WORK_ADDRESS', mode: 'car', enabled: true }); drawRoutes(); dirty(); };
+
+function drawFeeds() {
+  $('feeds').innerHTML = cfg.news.feeds.map((f, i) => `<div class="widget">
+    <span class="name" style="text-transform:none">${esc(f.name)}</span>
+    <button class="small" data-delf="${i}">Remove</button>
+    <label class="switch"><input type="checkbox" data-fon="${i}" ${f.enabled !== false ? 'checked' : ''}><span></span></label>
+  </div>`).join('') || '<p class="hint">No feeds yet.</p>';
+}
+$('feeds').addEventListener('click', (e) => { if (e.target.dataset.delf) { cfg.news.feeds.splice(+e.target.dataset.delf, 1); drawFeeds(); dirty(); } });
+$('feeds').addEventListener('change', (e) => { if (e.target.dataset.fon) { cfg.news.feeds[+e.target.dataset.fon].enabled = e.target.checked; dirty(); } });
+$('presetFeed').onchange = (e) => {
+  const p = PRESETS[+e.target.value]; if (!p) return;
+  const ex = cfg.news.feeds.find((f) => f.url === p[1]);
+  if (ex) ex.enabled = true; else cfg.news.feeds.push({ name: p[0], url: p[1], enabled: true });
+  e.target.value = ''; drawFeeds(); dirty();
+};
+$('addFeed').onclick = () => {
+  const url = prompt('RSS feed address'); if (!url) return;
+  const name = prompt('Short name to show on screen', new URL(url).hostname.replace(/^www\./, '')) || 'News';
+  cfg.news.feeds.push({ name, url, enabled: true }); drawFeeds(); dirty();
+};
+
+$('locBtn').onclick = async () => {
+  const q = $('locSearch').value.trim(); if (!q) return;
+  const j = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?count=5&name=${encodeURIComponent(q)}`)).json();
+  $('locResults').innerHTML = (j.results || []).map((r, i) => `<button data-loc="${i}">${esc(r.name)}, ${esc(r.admin1 || '')} ${esc(r.country_code || '')}</button>`).join('') || '<p class="hint">No matches.</p>';
+  $('locResults').onclick = (e) => {
+    const r = j.results?.[+e.target.dataset.loc]; if (!r) return;
+    cfg.location = { name: r.name, lat: +r.latitude.toFixed(4), lon: +r.longitude.toFixed(4) };
+    if (r.timezone) cfg.timezone = r.timezone;
+    $('locResults').innerHTML = ''; $('locSearch').value = ''; fill(); dirty();
+  };
+};
+$('locSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('locBtn').click(); });
+
+const bind = (id, fn) => $(id).addEventListener('change', () => { fn($(id).value); dirty(); });
+bind('units', (v) => cfg.units = v); bind('tz', (v) => cfg.timezone = v.trim());
+bind('calDays', (v) => cfg.calendar.days = +v); bind('calMax', (v) => cfg.calendar.maxEvents = +v);
+bind('newsMax', (v) => cfg.news.maxItems = +v);
+bind('refresh', (v) => cfg.refreshMinutes = +v); bind('rotate', (v) => cfg.rotate = +v);
+
+function dirty() { status('Unsaved changes'); }
+
+$('save').onclick = async () => {
+  $('save').disabled = true; status('Saving…');
+  try {
+    const r = await gh('/contents/config.json', { method: 'PUT', body: JSON.stringify({
+      message: 'Update dashboard settings from phone', branch,
+      content: b64encode(JSON.stringify(cfg, null, 2) + '\n'), sha,
+    }) });
+    sha = r.content.sha;
+    status('Saved. Your new screen will be ready in about 2 minutes.', 'ok');
+    setTimeout(() => { loadPreview(); lastRun(); }, 150000);
+  } catch (e) { status(e.message, 'err'); }
+  $('save').disabled = false;
+};
+$('refreshNow').onclick = async () => {
+  try {
+    await gh('/actions/workflows/dashboard.yml/dispatches', { method: 'POST', body: JSON.stringify({ ref: branch }) });
+    status('Rebuilding the screen. Check back in about 2 minutes.', 'ok');
+    setTimeout(() => { loadPreview(); lastRun(); }, 150000);
+  } catch (e) { status(e.message, 'err'); }
+};
+$('connectBtn').onclick = connect;
+if ($('token').value && $('owner').value && $('repo').value) connect();
+</script>
+</body>
+</html>

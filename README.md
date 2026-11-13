@@ -22,8 +22,7 @@ Everything here runs free on a **public** GitHub repo. Your addresses and calend
 
 1. Create a free account at github.com if you don't have one.
 2. Create a **new public repository** named `kobo-dash`.
-3. Upload this whole folder to it. The easiest way is [GitHub Desktop](https://desktop.github.com): *File → Add local repository → Publish*.
-   > On a Mac, the `.github` folder is hidden in Finder, so drag-and-drop uploads on the website will skip it. GitHub Desktop doesn't have that problem.
+3. Upload every file in this folder except `dashboard.yml` with *Add file → Upload files*. Then click *Add file → Create new file*, name it `.github/workflows/dashboard.yml`, paste in the contents of `dashboard.yml`, and commit.
 4. In the repo, go to **Settings → Pages**. Under *Build and deployment → Source*, choose **GitHub Actions**.
 5. Go to **Settings → Secrets and variables → Actions → New repository secret** and add whichever of these you want:
 
@@ -63,7 +62,7 @@ From the settings page you can change the location, units, widget order, commute
 4. Copy NickelMenu's `KoboRoot.tgz` into `.kobo/`, then eject. The Kobo installs it and reboots.
 5. Plug it in again. Extract `KoboRoot.tgz` from the kobo-stuff archive, copy it into `.kobo/`, then eject and let it reboot.
 6. Plug it in again. Copy the `TRMNL` folder to `.adds/TRMNL/` and `TRMNL.ini` to `.adds/nm/`.
-7. Replace `.adds/TRMNL/config.json` with `kobo/config.json` from this repo, and edit **TrmnlApiUrl**:
+7. Replace `.adds/TRMNL/config.json` with `kobo-config.json` from this repo (rename it to `config.json`), and edit **TrmnlApiUrl**:
    * `https://YOUR-USERNAME.github.io/kobo-dash/SITE_KEY` (or without `/SITE_KEY` if you didn't set one)
    * No slash at the end. The Kobo adds `/display` itself.
 8. Eject. On the Kobo, tap the new **NickelMenu** menu (bottom-right on the home screen) → **TRMNL**.
@@ -77,8 +76,8 @@ From the settings page you can change the location, units, widget order, commute
 ## Customizing further
 
 * `config.json` holds all settings. You can edit it on github.com or through the settings page.
-* `src/template.mjs` controls the layout and styles (600×800 px). Try a layout locally with `npm install && npm run demo` (uses sample data), then open `site/dashboard.png`.
-* `src/sources/` has one file per data source, so adding a new widget (TTC arrivals, stocks, sports scores) means a new source file plus a block in the template.
+* `template.mjs` controls the layout and styles (600×800 px). Try a layout locally with `npm install && npm run demo` (uses sample data), then open `site/dashboard.png`.
+* `weather.mjs`, `commute.mjs`, `calendar.mjs` and `news.mjs` each fetch one data source, so adding a new widget (TTC arrivals, stocks, sports scores) means a new source file plus a block in the template.
 
 ## Things to know
 
