@@ -1,0 +1,14 @@
+{
+  "name": "kobo-dash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Weather, commute, calendar and news dashboard for an old Kobo e-reader, built by GitHub Actions.",
+  "type": "module",
+  "scripts": {
+    "render": "node src/render.mjs",
+    "demo": "DEMO=1 node src/render.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}
