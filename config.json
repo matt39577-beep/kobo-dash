@@ -43,7 +43,7 @@
     "maxEvents": 8
   },
   "news": {
-    "maxItems": 6,
+    "maxItems": 3,
     "feeds": [
       {
         "name": "CBC",
