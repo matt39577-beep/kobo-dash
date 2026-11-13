@@ -30,7 +30,7 @@
     "country": "CA",
     "routes": [
       {
-        "label": "To SCHOOL",
+        "label": "To SQUARE ONE ",
         "from": "$HOME_ADDRESS",
         "to": "$WORK_ADDRESS",
         "mode": "car",
