@@ -61,5 +61,6 @@
         "enabled": true
       }
     ]
-  }
+  },
+  "orientation": "portrait"
 }
