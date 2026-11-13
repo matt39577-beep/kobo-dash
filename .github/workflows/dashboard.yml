@@ -1,0 +1,74 @@
+name: Build dashboard
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes (GitHub may run it a few minutes late)
+  push:
+    branches: [main]
+  workflow_dispatch:          # "Refresh now" button on the settings page
+
+permissions:
+  contents: write   # only used by the keep-alive step
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Render dashboard
+        run: node render.mjs
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+          CHROME_PATH: /usr/bin/google-chrome
+          TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+          CALENDAR_ICS_URLS: ${{ secrets.CALENDAR_ICS_URLS }}
+          HOME_ADDRESS: ${{ secrets.HOME_ADDRESS }}
+          WORK_ADDRESS: ${{ secrets.WORK_ADDRESS }}
+          SITE_KEY: ${{ secrets.SITE_KEY }}
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      # GitHub pauses scheduled workflows after 60 days with no commits.
+      # This adds an empty commit roughly once a month so the dashboard never stops.
+      - name: Keep schedule alive
+        if: github.event_name == 'schedule'
+        run: |
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date +%s) - last )) -gt $(( 45 * 86400 )) ]; then
+            git config user.name "kobo-dash-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Keep scheduled refresh alive"
+            git push
+          fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
