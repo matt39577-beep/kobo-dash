@@ -27,7 +27,7 @@ button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(
 button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 button.small{padding:6px 10px;font-size:14px}
 button:disabled{opacity:.5}
-.preview{width:100%;max-width:300px;display:block;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:#fff;aspect-ratio:3/4;object-fit:contain}
+.preview{width:100%;max-width:400px;display:block;margin:0 auto;border:1px solid var(--line);border-radius:6px;background:#fff;aspect-ratio:4/3;object-fit:contain}
 .widget{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 .widget:first-of-type{border-top:none}
 .widget .name{flex:1;font-weight:600;text-transform:capitalize}
@@ -119,7 +119,10 @@ details summary{cursor:pointer;font-weight:600}
       <h2>Display</h2>
       <div class="row">
         <div><label for="refresh">Kobo refresh</label><select id="refresh"><option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Every hour</option></select></div>
-        <div><label for="rotate">Rotation</label><select id="rotate"><option value="0">Portrait</option><option value="180">Portrait, flipped</option><option value="90">Turned 90°</option><option value="270">Turned 270°</option></select></div>
+        <div><label for="orientation">Layout</label><select id="orientation"><option value="landscape">Wide (landscape)</option><option value="portrait">Tall (portrait)</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="rotate">Rotation</label><select id="rotate"><option value="0">Normal</option><option value="180">Upside down</option><option value="90">Turned 90°</option><option value="270">Turned 270°</option></select></div>
       </div>
       <p class="hint">The image itself is rebuilt about every 15 minutes. Longer Kobo refreshes save battery.</p>
     </div>
@@ -208,7 +211,7 @@ function fill() {
   $('locCurrent').textContent = cfg.location ? `Now: ${cfg.location.name} (${(+cfg.location.lat).toFixed(2)}, ${(+cfg.location.lon).toFixed(2)})` : '';
   $('calDays').value = String(cfg.calendar.days || 2); $('calMax').value = cfg.calendar.maxEvents || 8;
   $('newsMax').value = cfg.news.maxItems || 6;
-  $('refresh').value = String(cfg.refreshMinutes || 15); $('rotate').value = String(cfg.rotate || 0);
+  $('refresh').value = String(cfg.refreshMinutes || 15); $('rotate').value = String(cfg.rotate || 0); $('orientation').value = cfg.orientation || 'landscape';
   drawWidgets(); drawRoutes(); drawFeeds();
   $('presetFeed').innerHTML = '<option value="">Add a feed…</option>' + PRESETS.map((p, i) => `<option value="${i}">${p[0]}</option>`).join('');
 }
@@ -279,7 +282,7 @@ const bind = (id, fn) => $(id).addEventListener('change', () => { fn($(id).value
 bind('units', (v) => cfg.units = v); bind('tz', (v) => cfg.timezone = v.trim());
 bind('calDays', (v) => cfg.calendar.days = +v); bind('calMax', (v) => cfg.calendar.maxEvents = +v);
 bind('newsMax', (v) => cfg.news.maxItems = +v);
-bind('refresh', (v) => cfg.refreshMinutes = +v); bind('rotate', (v) => cfg.rotate = +v);
+bind('refresh', (v) => cfg.refreshMinutes = +v); bind('rotate', (v) => cfg.rotate = +v); bind('orientation', (v) => cfg.orientation = v);
 
 function dirty() { status('Unsaved changes'); }
 

@@ -47,7 +47,8 @@ function weatherBlock(w, tz) {
         <div class="cond">${esc(describe(w.code))}</div>
         <div>High <b>${w.today.hi}°</b> · Low <b>${w.today.lo}°</b></div>
         <div>Feels like ${w.feels}° · ${w.wind} ${w.windUnit}</div>
-        <div>${w.today.pop != null ? `Precip ${w.today.pop}%` : ''}${sunset ? ` · Sunset ${sunset}` : ''}</div>
+        <div>${w.today.pop != null ? `Precip ${w.today.pop}%` : ''}${w.today.pop != null && sunset ? ' · ' : ''}${sunset ? `Sunset ${sunset}` : ''}</div>
+        ${w.staleAt ? `<div><i>As of ${fmtTime(new Date(w.staleAt), tz)}</i></div>` : ''}
       </div>
     </div>
     <div class="forecast">
@@ -71,7 +72,7 @@ function commuteBlock(c, tz) {
         <div class="mins">${r.minutes}<small> min</small></div>
       </div>
       <div class="bar"><i style="width:${typicalPct}%"></i><s style="width:${100 - typicalPct}%"></s></div>
-      <div class="sub">${status}${r.delayMin > 0 ? ` · +${r.delayMin} min` : ''} · ${r.km.toFixed(1)} km${r.arrival ? ` · arrive ${fmtTime(r.arrival, tz)}` : ''}</div>
+      <div class="sub">${status}${r.delayMin > 0 ? ` · +${r.delayMin} min` : ''} <span class="km">· ${r.km.toFixed(1)} km</span>${r.arrival ? ` · arrive ${fmtTime(r.arrival, tz)}` : ''}</div>
     </div>`;
   }).join('');
   return section('Commute', `<div class="routes">${rows}</div>`, 'commute');
@@ -110,7 +111,7 @@ function newsBlock(n, now) {
 
 export function renderHtml({ config, data, now }) {
   const tz = config.timezone;
-  const blocks = config.widgets.filter((w) => w.enabled).map((w) => {
+  const render = (w) => {
     switch (w.type) {
       case 'weather': return data.weather ? weatherBlock(data.weather, tz) : '';
       case 'commute': return data.commute ? commuteBlock(data.commute, tz) : '';
@@ -118,50 +119,67 @@ export function renderHtml({ config, data, now }) {
       case 'news': return data.news ? newsBlock(data.news, now) : '';
       default: return '';
     }
-  }).join('');
+  };
+  const on = config.widgets.filter((w) => w.enabled);
 
+  // Landscape (800x600) is the Kobo Mini's natural screen; portrait (600x800) is optional.
+  const landscape = (config.orientation || 'landscape') !== 'portrait';
+  const W = landscape ? 800 : 600; const H = landscape ? 600 : 800;
+  let body;
+  if (landscape) {
+    const left = on.filter((w) => w.type === 'weather' || w.type === 'commute').map(render).join('');
+    const right = on.filter((w) => w.type === 'calendar' || w.type === 'news').map(render).join('');
+    body = left && right
+      ? `<div class="cols"><div class="col left">${left}</div><div class="col right">${right}</div></div>`
+      : `<div class="col">${left || right}</div>`;
+  } else {
+    body = on.map(render).join('');
+  }
+
+  // Optional rotation of the whole picture, for screens that draw it turned.
   const rot = [0, 90, 180, 270].includes(+config.rotate) ? +config.rotate : 0;
-  const landscape = rot === 90 || rot === 270;
-  const vw = landscape ? 800 : 600; const vh = landscape ? 600 : 800;
+  const turned = rot === 90 || rot === 270;
+  const vw = turned ? H : W; const vh = turned ? W : H;
   const transform = rot === 0 ? 'none'
-    : rot === 90 ? 'translate(800px,0) rotate(90deg)'
-      : rot === 180 ? 'translate(600px,800px) rotate(180deg)'
-        : 'translate(0,600px) rotate(-90deg)';
+    : rot === 90 ? `translate(${H}px,0) rotate(90deg)`
+      : rot === 180 ? `translate(${W}px,${H}px) rotate(180deg)`
+        : `translate(0,${W}px) rotate(-90deg)`;
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=block" rel="stylesheet">
 <style>
+/* E-ink: everything is black or white. Greys look washed out on the Kobo Mini. */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:${vw}px;height:${vh}px;background:#fff;overflow:hidden}
-#screen{width:600px;height:800px;padding:24px 30px 12px;display:flex;flex-direction:column;gap:12px;
+#screen{width:${W}px;height:${H}px;padding:24px 30px 12px;display:flex;flex-direction:column;gap:12px;
   font-family:'Atkinson Hyperlegible','DejaVu Sans',Arial,sans-serif;color:#000;
   transform-origin:0 0;-webkit-font-smoothing:antialiased}
 #screen.rot{transform:${transform}}
 header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #000;padding-bottom:10px}
 header h1{font-size:40px;line-height:1;font-weight:700;letter-spacing:-.5px}
 header .date{font-size:21px;margin-top:4px}
-header .meta{text-align:right;font-size:15px;line-height:1.35;color:#333}
-header .meta b{font-size:17px;color:#000}
+header .meta{text-align:right;font-size:16px;line-height:1.35}
+header .meta b{font-size:18px}
 section{display:flex;flex-direction:column;min-height:0}
 section.flex{flex:1 1 0}
 section.news{flex-grow:1.25}
-h2{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px}
-h2::after{content:"";flex:1;height:1.5px;background:#000}
-.note{font-size:17px;color:#333}
+h2{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px}
+h2::after{content:"";flex:1;height:2px;background:#000}
+.note{font-size:17px}
 /* weather */
 .weather .now{display:flex;align-items:center;gap:6px}
 .weather .temp{font-size:104px;font-weight:700;line-height:.9;letter-spacing:-4px;margin-right:8px}
 .weather .temp span{font-size:64px;vertical-align:top;letter-spacing:0;position:relative;top:6px}
 .weather .facts{font-size:17px;line-height:1.45;flex:1}
 .weather .facts .cond{font-size:24px;font-weight:700;line-height:1.15;margin-bottom:2px}
-.weather .forecast{display:flex;margin-top:10px;border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:8px 0}
-.hourly{display:flex;flex:5;justify-content:space-around;border-right:1.5px solid #000}
+.weather .forecast{display:flex;margin-top:10px;border-top:2px solid #000;border-bottom:2px solid #000;padding:8px 0}
+.hourly{display:flex;flex:5;justify-content:space-around;border-right:2px solid #000}
 .daily{display:flex;flex:3;justify-content:space-around;padding-left:6px}
 .slot,.day{display:flex;flex-direction:column;align-items:center;font-size:16px;line-height:1.2}
 .slot .lbl,.day .lbl{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
 .slot .t{font-size:20px;font-weight:700}
-.slot .pop{font-size:13px;color:#333}
+.slot .pop{font-size:14px}
 .day .wx{margin:3px 0}
 .day .hl{font-size:16px}
 .day .hl b{font-size:19px}
@@ -171,28 +189,58 @@ h2::after{content:"";flex:1;height:1.5px;background:#000}
 .route .name{font-size:21px;font-weight:700}
 .route .mins{font-size:34px;font-weight:700;line-height:1}
 .route .mins small{font-size:17px;font-weight:400}
-.route .bar{display:flex;height:9px;border:1.5px solid #000;margin:5px 0 4px}
+.route .bar{display:flex;height:10px;border:2px solid #000;margin:5px 0 4px}
 .route .bar i{background:#000}
 .route .bar s{background:repeating-linear-gradient(-45deg,#000 0 2px,#fff 2px 5px)}
-.route .sub{font-size:15px;color:#222}
+.route .sub{font-size:16px}
 /* lists */
 .list{list-style:none;overflow:hidden;flex:1 1 0;min-height:0}
-.dayhead{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:6px 0 2px;color:#333}
+.dayhead{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:6px 0 2px}
 .dayhead:first-child{margin-top:0}
 .ev{display:flex;gap:10px;font-size:17px;line-height:1.25;padding:2px 0}
 .ev .when{flex:0 0 96px;font-weight:700;white-space:nowrap}
 .ev .what{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev em{font-style:normal;color:#444}
-.news-list li{padding:3px 0;border-bottom:1px solid #999;display:flex;flex-direction:column}
+.ev em{font-style:italic}
+.news-list li{padding:3px 0;border-bottom:1px solid #000;display:flex;flex-direction:column}
 .news-list li:last-child{border-bottom:none}
 .news-list .hd{font-size:17px;line-height:1.25;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.news-list .src{font-size:13px;color:#444;margin-top:1px}
-</style></head><body><div id="screen">
+.news-list .src{font-size:14px;margin-top:1px}
+/* landscape: two columns */
+.L #screen{padding:18px 24px 10px;gap:10px}
+.L header{padding-bottom:8px}
+.L header h1{font-size:34px}
+.L header .date{font-size:19px}
+.cols{display:flex;gap:26px;flex:1 1 0;min-height:0}
+.col{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1 1 0}
+.col.left{flex:0 0 350px;width:350px;overflow:hidden}
+.L .weather .now{gap:4px}
+.L .weather .wx:first-child{width:92px;height:92px}
+.L .weather .temp{font-size:92px}
+.L .weather .temp span{font-size:56px}
+.L .weather .facts{flex-basis:100%;font-size:16px;line-height:1.4;margin-top:6px}
+.L .weather .facts .cond{font-size:22px}
+.L .weather .now{flex-wrap:wrap}
+.L .weather .forecast{flex-direction:column;padding:6px 0;margin-top:8px}
+.L .hourly{border-right:none;border-bottom:1.5px solid #000;padding-bottom:6px}
+.L .daily{padding:6px 0 0}
+.L .slot .t{font-size:18px}
+.L .day{flex-direction:row;gap:6px;align-items:center}
+.L .day .lbl{font-size:13px}
+.L .day .hl{white-space:nowrap;font-size:14px}
+.L .day .hl b{font-size:17px}
+.L .daily{justify-content:space-between;gap:4px}
+.L .day .wx{margin:0;width:24px;height:24px}
+.L .route .mins{font-size:30px}
+.L .route .name{font-size:19px}
+.L .route .sub{font-size:14px}
+.L .slot .pop{font-size:13px}
+.L .km{display:none}
+</style></head><body class="${landscape ? 'L' : 'P'}"><div id="screen">
 <header>
   <div><h1>${fmtDate(now, tz, { weekday: 'long' })}</h1><div class="date">${fmtDate(now, tz, { month: 'long', day: 'numeric', year: 'numeric' })}</div></div>
   <div class="meta"><b>${esc(config.location?.name || '')}</b><br>Updated ${fmtTime(now, tz)}</div>
 </header>
-${blocks}
+${body}
 </div>
 <script>
 // Drop list items that don't fully fit, so nothing is cut in half. Called by render.mjs after fonts load.
