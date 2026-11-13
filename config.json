@@ -19,7 +19,7 @@
     },
     {
       "type": "calendar",
-      "enabled": true
+      "enabled": false
     },
     {
       "type": "news",
@@ -30,7 +30,7 @@
     "country": "CA",
     "routes": [
       {
-        "label": "To work",
+        "label": "To TMU",
         "from": "$HOME_ADDRESS",
         "to": "$WORK_ADDRESS",
         "mode": "car",
