@@ -289,10 +289,16 @@ function dirty() { status('Unsaved changes'); }
 $('save').onclick = async () => {
   $('save').disabled = true; status('Saving…');
   try {
-    const r = await gh('/contents/config.json', { method: 'PUT', body: JSON.stringify({
-      message: 'Update dashboard settings from phone', branch,
-      content: b64encode(JSON.stringify(cfg, null, 2) + '\n'), sha,
-    }) });
+    // Always save on top of GitHub's latest copy (avoids "409 does not match" errors)
+    const put = async () => {
+      sha = (await gh(`/contents/config.json?ref=${branch}&t=${Date.now()}`)).sha;
+      return gh('/contents/config.json', { method: 'PUT', body: JSON.stringify({
+        message: 'Update dashboard settings from phone', branch,
+        content: b64encode(JSON.stringify(cfg, null, 2) + '\n'), sha,
+      }) });
+    };
+    let r;
+    try { r = await put(); } catch (e) { if (!/409/.test(e.message)) throw e; await new Promise((ok) => setTimeout(ok, 1500)); r = await put(); }
     sha = r.content.sha;
     status('Saved. Your new screen will be ready in about 2 minutes.', 'ok');
     setTimeout(() => { loadPreview(); lastRun(); }, 150000);

@@ -136,8 +136,9 @@ export function renderHtml({ config, data, now }) {
     body = on.map(render).join('');
   }
 
-  // Optional rotation of the whole picture, for screens that draw it turned.
-  const rot = [0, 90, 180, 270].includes(+config.rotate) ? +config.rotate : 0;
+  // The Kobo always draws a 600x800 (portrait) picture. A landscape layout is turned
+  // 90° clockwise so it reads correctly with the Kobo on its side (logo on the right).
+  const rot = ((landscape ? 90 : 0) + (+config.rotate || 0)) % 360;
   const turned = rot === 90 || rot === 270;
   const vw = turned ? H : W; const vh = turned ? W : H;
   const transform = rot === 0 ? 'none'

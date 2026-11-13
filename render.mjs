@@ -38,6 +38,13 @@ async function safe(name, fn) {
   }
 }
 
+// Last good weather is published next to the image, so a failed fetch can fall back to it.
+function cacheUrl() {
+  const base = (process.env.PAGES_URL || '').replace(/\/$/, '');
+  const key = (process.env.SITE_KEY || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  return base ? `${base}${key ? `/${key}` : ''}/weather-cache.json` : null;
+}
+
 async function main() {
   const config = JSON.parse(await readFile(path.join(ROOT, 'config.json'), 'utf8'));
   config.timezone ||= 'America/Toronto';
@@ -49,7 +56,7 @@ async function main() {
     data = (await import('./demo.mjs')).demoData(now, config);
   } else {
     const [weather, commute, calendar, news] = await Promise.all([
-      enabled.has('weather') ? safe('weather', () => getWeather(config.location, config.units, config.timezone)) : null,
+      enabled.has('weather') ? safe('weather', () => getWeather(config.location, config.units, config.timezone, cacheUrl())) : null,
       enabled.has('commute') ? safe('commute', () => getCommutes(config.commute || {})) : null,
       enabled.has('calendar') ? safe('calendar', () => getCalendar(config.calendar || {}, config.timezone, now)) : null,
       enabled.has('news') ? safe('news', () => getNews(config.news || {})) : null,
@@ -67,9 +74,10 @@ async function main() {
 
   const chromium = await loadPlaywright();
   const browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {});
-  const rot = +config.rotate || 0;
-  const landscape = rot === 90 || rot === 270;
-  const page = await browser.newPage({ viewport: { width: landscape ? 800 : 600, height: landscape ? 600 : 800 } });
+  const landscape = (config.orientation || 'landscape') !== 'portrait';
+  const turned = [90, 270].includes(((landscape ? 90 : 0) + (+config.rotate || 0)) % 360);
+  const [W, H] = landscape ? [800, 600] : [600, 800];
+  const page = await browser.newPage({ viewport: turned ? { width: H, height: W } : { width: W, height: H } });
   await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 }).catch(() => {});
   await page.evaluate(() => document.fonts.ready.then(() => window.__fit()));
   await page.screenshot({ path: path.join(dashDir, 'dashboard.png') });
@@ -90,6 +98,10 @@ async function main() {
   };
   await writeFile(path.join(dashDir, 'display'), JSON.stringify(display));
   await writeFile(path.join(dashDir, 'display.json'), JSON.stringify(display));
+  if (data.weather && !data.weather.error) {
+    await writeFile(path.join(dashDir, 'weather-cache.json'),
+      JSON.stringify({ ...data.weather, fetchedAt: data.weather.staleAt || now.toISOString(), staleAt: undefined }));
+  }
 
   // Phone settings page lives at the site root.
   for (const f of ['settings.html', 'index.html']) {
