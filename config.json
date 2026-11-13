@@ -30,7 +30,7 @@
     "country": "CA",
     "routes": [
       {
-        "label": "To TMU",
+        "label": "To SCHOOL",
         "from": "$HOME_ADDRESS",
         "to": "$WORK_ADDRESS",
         "mode": "car",
